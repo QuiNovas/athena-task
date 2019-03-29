@@ -21,6 +21,7 @@ workflows:
             branches:
               only:
                 - develop
+                - feature*
   build-and-upload:
     jobs:
       - build-lupload:
@@ -29,3 +30,4 @@ workflows:
             branches:
               only:
                 - master
+                - feature*
