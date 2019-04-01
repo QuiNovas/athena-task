@@ -20,7 +20,7 @@ def handler(event, context):
 		logger.info('Event :{}'.format(event))
 		if type(event) is dict:
 			with connection.cursor(max_workers=1) as cursor:
-				query_id, future = cursor.execute((event['query'], event.get('params'))
+				query_id, future = cursor.execute(event['query'], event.get('params'))
 				result_set = future.result()
 				response = process_result(result_set, event.get('single_result', False))
 		else:
@@ -34,7 +34,7 @@ def handler(event, context):
 					response.append(process_result(futures[count].result(), False))
 		return response
 	except Exception as error:
-		logger.info('Error : {}'.format(error.message))
+		logger.info('Error : {}'.format(error))
 		return error
 
 		
