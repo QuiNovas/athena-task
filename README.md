@@ -48,7 +48,7 @@ function.handler
  This is the query string to be executed. It may be parameterized with `PyFormat`, only supporting [named placeholders](https://pyformat.info/#named_placeholders) with the old `%` operator style. If `%` character is contained in your query, it must be escaped with `%%`. 
 - **params** _(map)_ | _(list(map))_ -- **[REQUIRED]** 
  If your _query_ is parameterized. In the case of a multiple queries, this will be a `list` of `maps`.
-- - **single_result** _(boolean)_ -- 
+- **single_result** _(boolean)_ -- 
  Defaults to false. True for a single result
 
  
