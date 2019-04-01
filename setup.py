@@ -8,7 +8,7 @@ lambda_name = 'athena-task'
 # https://packaging.python.org/en/latest/single_source_version.html
 lambda_version = '0.0.1'
 
-lambda_description = 'AWS Lambda designed to execute athena queries.
+lambda_description = 'AWS Lambda designed to execute athena queries.'
 
 long_description = lambda_description
 

@@ -16,16 +16,8 @@ workflows:
   version: 2
   build-only:
     jobs:
-      - build-ldist:
-          filters:
-            branches:
-              only:
-                - develop
+      - build-ldist
   build-and-upload:
     jobs:
       - build-lupload:
           context: lambdalambdalambda
-          filters:
-            branches:
-              only:
-                - master
