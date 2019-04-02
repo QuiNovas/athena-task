@@ -81,7 +81,7 @@ Request Syntax
 **Parameters**: OPTIONAL
   Required if your `Operation` is parameterized.
 **SingleResult**: OPTIONAL
-  Defaults to `false`. Set to `true` to enforce a single result. If
+  Defaults to `true`. Set to `false` to allow a multiple results. If
   set to `true` and `Operation` returns multiple results, an error
   will be thrown.
 **EncryptionOption**: OPTIONAL

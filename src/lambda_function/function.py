@@ -17,7 +17,7 @@ def handler(event, context):
 	with _connect(event).cursor() as cursor:
 		return _process_results(
 			cursor.execute(event['Operation'], event.get('Parameters')), 
-			event.get('SingleResult', False)
+			event.get('SingleResult', True)
 		)
 
 def _connect(event):
@@ -38,7 +38,7 @@ def _process_results(cursor, single_result):
 		if single_result and len(results) == 1:
 			logger.info('Expected single row but returned more than one row in results for the query : {}'.format(cursor.query))
 		results.append(_map_result(description, row))
-	return results if not single_result else results[0] if len(results) else {}
+	return results if not single_result else results[0] if results else {}
 	
 def _map_result(description, row):
     result = {}
