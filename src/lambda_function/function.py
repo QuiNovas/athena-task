@@ -45,8 +45,3 @@ def _map_result(description, row):
     for column in range(0, len(description)):
         result[description[column][0]] = row[column]
     return result
-	
-	
-
-		
-
