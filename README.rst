@@ -62,7 +62,7 @@ Request Syntax
 
   {
     "Operation": "string",
-    "SchemaName" "string",
+    "SchemaName": "string",
     "Parameters": {},
     "SingleResult": boolean,
     "EncryptionOption": "string",
