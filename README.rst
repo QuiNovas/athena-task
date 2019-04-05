@@ -58,10 +58,10 @@ Handler Method
 
 Request Syntax
 --------------
-.. code-block:: JSON
+.. code-block::
 
   {
-    "Operation": "string",
+    "Operation": "string" | ["string"],
     "SchemaName": "string",
     "Parameters": {},
     "SingleResult": boolean,
@@ -72,14 +72,13 @@ Request Syntax
 
 **Operation**: REQUIRED
   This is the query string to be executed. It may be parameterized with
-  `PyFormat`_, only supporting `named placeholders`_ with the old `%` operator
-  style. If `%` character is contained in your query, it must be escaped
-  with `%%`.
+  `PyFormat`_, using the new format `{}` named placeholders method.
 **SchemaName**: OPTIONAL
   This is the `AWS Athena`_ schema to run the `Operation` against. Defaults to
   `default`.
 **Parameters**: OPTIONAL
-  Required if your `Operation` is parameterized.
+  Required if your `Operation` is parameterized. The keys in this map should
+  correspond to the format names in your operation string or array.
 **SingleResult**: OPTIONAL
   Defaults to `true`. Set to `false` to allow a multiple results. If
   set to `true` and `Operation` returns multiple results, an error

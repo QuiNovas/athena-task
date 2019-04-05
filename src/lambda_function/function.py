@@ -17,9 +17,17 @@ def handler(event, context):
 	logger.info('Processing event {}'.format(json.dumps(event)))
 	with _connect(event).cursor() as cursor:
 		return _process_results(
-			cursor.execute(event['Operation'], event.get('Parameters')), 
+			cursor.execute(_format_operation(event['Operation'], event.get('Parameters', {}))), 
 			event.get('SingleResult', True)
 		)
+
+def _format_operation(operation, parameters):
+	result = ' '.join(operation) \
+		if isinstance(operation, (list, tuple)) \
+			else operation
+	result = result.format(**parameters)
+	logger.debug('Operation: {}'.format(result))
+	return result
 
 def _connect(event):
 	return connect(
