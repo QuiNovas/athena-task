@@ -8,6 +8,7 @@ from pyathena import connect
 POLL_INTERVAL = float(os.environ.get('POLL_INTERVAL', 1.0))
 REGION_NAME = os.environ.get('AWS_ATHENA_REGION_NAME', boto3.session.Session().region_name)
 S3_STAGING_DIR = os.environ['AWS_ATHENA_S3_STAGING_DIR']
+ATHENA_SCHEMA_NAME = os.environ.get('AWS_ATHENA_SCHEMA_NAME', 'default')
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -21,6 +22,7 @@ def handler(event, context):
 			event.get('SingleResult', True)
 		)
 
+
 def _format_operation(operation, parameters):
 	result = ' '.join(operation) \
 		if isinstance(operation, (list, tuple)) \
@@ -29,6 +31,7 @@ def _format_operation(operation, parameters):
 	logger.debug('Operation: {}'.format(result))
 	return result
 
+
 def _connect(event):
 	return connect(
 		encryption_option=event.get('EncryptionOption'),
@@ -36,10 +39,11 @@ def _connect(event):
 		poll_interval=POLL_INTERVAL,
 		region_name=REGION_NAME,
 		s3_staging_dir=S3_STAGING_DIR,
-		schema_name=event.get('SchemaName', 'default'),
+		schema_name=event.get('SchemaName', ATHENA_SCHEMA_NAME),
 		work_group=event.get('WorkGroup')
 	)
-		
+
+
 def _process_results(cursor, single_result):
 	results = []
 	description = cursor.description
@@ -50,7 +54,8 @@ def _process_results(cursor, single_result):
 		results.append(_map_result(description, row))
 	logger.debug('Query returned {} results'.format(len(results)))
 	return results if not single_result else results[0] if results else {}
-	
+
+
 def _map_result(description, row):
     result = {}
     for column in range(0, len(description)):

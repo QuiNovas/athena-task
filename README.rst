@@ -20,6 +20,11 @@ Environment Variables
 **AWS_ATHENA_S3_STAGING_DIR**: REQUIRED
   This is the S3 location that `AWS Athena`_ will store the query results in.
   It must be in the format `s3://YOUR_S3_BUCKET/path/to/`.
+**AWS_ATHENA_SCHEMA_NAME**: OPTIONAL
+  The schema/database name that you wish to query by default. The
+  **schemaName** input parameter will override this environment
+  variable if present. If neither is provided, will default to the
+  `default` schema/database.
 **POLL_INTERVAL**: OPTIONAL
   The rate at which to poll `AWS Athena`_ for a response, in seconds. Defaults
   to `1.0`.
@@ -94,6 +99,6 @@ Request Syntax
 
 Lambda Package Location
 -----------------------
-https://s3.amazonaws.com/lambdalambdalambda-repo/quinovas/athena-task/athena-task-0.0.1.zip
+https://s3.amazonaws.com/lambdalambdalambda-repo/quinovas/athena-task/athena-task-0.0.2.zip
 
 License: `APL2`_
