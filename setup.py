@@ -6,7 +6,7 @@ lambda_name = 'athena-task'
 # Versions should comply with PEP440.  For a discussion on single-sourcing
 # the version across setup.py and the project code, see
 # https://packaging.python.org/en/latest/single_source_version.html
-lambda_version = '0.0.2'
+lambda_version = '0.0.3'
 
 lambda_description = 'AWS Lambda designed to execute athena queries.'
 
