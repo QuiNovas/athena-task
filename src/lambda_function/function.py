@@ -1,63 +1,60 @@
-import boto3
-import json
-import logging.config
-import os
+from athena_type_converter import convert_result_set
+from backoff import on_predicate, fibo
+from boto3 import client
+from json import dumps as jsondumps
+from logging import getLogger, INFO
+from os import environ
 
-from pyathena import connect
 
-POLL_INTERVAL = float(os.environ.get('POLL_INTERVAL', 1.0))
-REGION_NAME = os.environ.get('AWS_ATHENA_REGION_NAME', boto3.session.Session().region_name)
-S3_STAGING_DIR = os.environ['AWS_ATHENA_S3_STAGING_DIR']
-ATHENA_SCHEMA_NAME = os.environ.get('AWS_ATHENA_SCHEMA_NAME', 'default')
-
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+getLogger().setLevel(INFO)
+__ATHENA = client('athena')
+__DATABASE = environ.get('DATABASE', 'default')
+__WORKGROUP = environ.get('WORKGROUP', 'primary')
 
 
 def handler(event, context):
-	logger.info('Processing event {}'.format(json.dumps(event)))
-	with _connect(event).cursor() as cursor:
-		return _process_results(
-			cursor.execute(_format_operation(event['Operation'], event.get('Parameters', {}))), 
-			event.get('SingleResult', True)
-		)
+	getLogger().info('Processing event {}'.format(jsondumps(event)))
+	query_execution_id = __ATHENA.start_query_execution(
+		QueryString=__format_operation(event['Operation'], event.get('Parameters', {})),
+		QueryExecutionContext={
+			'Database': event.get('Database', __DATABASE)
+		},
+		WorkGroup=event.get('WorkGroup', __WORKGROUP)
+	)
+	query_status = __poll_query_status(query_execution_id)
+	if query_status != 'SUCCEEDED':
+			if query_status in ('FAILED', 'CANCELLED'):
+					raise Exception('Operation execution failed with status {}'.format(query_status))
+			else:
+					raise Exception('Operation timed out with status {}'.format(query_status))
+	results = __get_results(query_execution_id)
+	return results if not event.get('SingleResult', True) else results[0] if len(results) else {}
 
 
-def _format_operation(operation, parameters):
+def __format_operation(operation, parameters):
 	result = ' '.join(operation) \
 		if isinstance(operation, (list, tuple)) \
 			else operation
 	result = result.format(**parameters)
-	logger.debug('Operation: {}'.format(result))
+	getLogger().debug('Operation: {}'.format(result))
 	return result
 
 
-def _connect(event):
-	return connect(
-		encryption_option=event.get('EncryptionOption'),
-		kms_key=event.get('KmsKey'),
-		poll_interval=POLL_INTERVAL,
-		region_name=REGION_NAME,
-		s3_staging_dir=S3_STAGING_DIR,
-		schema_name=event.get('SchemaName', ATHENA_SCHEMA_NAME),
-		work_group=event.get('WorkGroup')
-	)
+@on_predicate(fibo, lambda x: x not in ('SUCCEEDED', 'FAILED', 'CANCELLED'), max_time=899)
+def __poll_query_status(query_execution_id):
+    response = __ATHENA.get_query_execution(
+        QueryExecutionId=query_execution_id
+    )
+    return response['QueryExecution']['Status']['State']
 
 
-def _process_results(cursor, single_result):
-	results = []
-	description = cursor.description
-	logger.debug('Query "{}" returned in {}ms'.format(cursor.query, cursor.execution_time_in_millis))
-	for row in cursor:
-		if single_result and len(results) == 1:
-			raise Exception('Expected single row but returned more than one row in results for the query : {}'.format(cursor.query))
-		results.append(_map_result(description, row))
-	logger.debug('Query returned {} results'.format(len(results)))
-	return results if not single_result else results[0] if results else {}
-
-
-def _map_result(description, row):
-    result = {}
-    for column in range(0, len(description)):
-        result[description[column][0]] = row[column]
-    return result
+def __get_results(query_execution_id, next_token=None):
+    params = {
+        'QueryExecutionId': query_execution_id,
+        'MaxResults': 1000
+    }
+    if next_token:
+        params['NextToken'] = next_token
+    response = __ATHENA.get_query_results(**params)
+    results = convert_result_set(response['ResultSet'])
+    return results if 'NextToken' not in response else results + __get_results(query_execution_id, response['NextToken'])
