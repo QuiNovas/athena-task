@@ -7,6 +7,9 @@ athena-task
 .. _AWS Athena: https://docs.aws.amazon.com/athena/latest/ug/what-is.html
 .. _PyFormat: https://pyformat.info/
 
+**VERSION 0.1.0 IS A BREAKING CHANGE FROM PREVIOUS VERSIONS.
+PLEASE PAY PARTICULAR ATTENTION TO THE INFORMATION BELOW.**
+
 This is a generic Lambda task function that can execute athena queries. It
 is intended to be used in `AWS StepFunctions`_.
 This function will take the input information, call `AWS Athena`_, and respond
@@ -14,46 +17,17 @@ to StepFunctions with the results of the SQL call.
 
 Environment Variables
 ---------------------
-**AWS_ATHENA_REGION_NAME**: OPTIONAL
-  The AWS region for Athena that this function should use. Defaults to the
-  region that the function is executing in.
-**AWS_ATHENA_S3_STAGING_DIR**: REQUIRED
-  This is the S3 location that `AWS Athena`_ will store the query results in.
-  It must be in the format `s3://YOUR_S3_BUCKET/path/to/`.
-**AWS_ATHENA_SCHEMA_NAME**: OPTIONAL
-  The schema/database name that you wish to query by default. The
-  **schemaName** input parameter will override this environment
-  variable if present. If neither is provided, will default to the
-  `default` schema/database.
-**POLL_INTERVAL**: OPTIONAL
-  The rate at which to poll `AWS Athena`_ for a response, in seconds. Defaults
-  to `1.0`.
+:DATABASE: The `AWS Athena`_ Database to query.
+  May be overridden in the ``query`` request. Defaults to ``default``
+:WORKGROUP: The `AWS Athena`_ Workgroup to use during queries.
+  May be overridden in the ``query`` request. Defaults to ``primary``.
 
 AWS Permissions Required
 ------------------------
-- athena:StopQueryExecution
-- athena:StartQueryExecution
-- athena:RunQuery
-- athena:ListQueryExecutions
-- athena:GetTables
-- athena:GetTable
-- athena:GetQueryResultsStream
-- athena:GetQueryResults
-- athena:GetQueryExecutions
-- athena:GetQueryExecution
-- athena:GetNamespaces
-- athena:GetNamespace
-- athena:GetExecutionEngines
-- athena:GetExecutionEngine
-- athena:GetCatalogs
-- athena:CancelQueryExecution
-- athena:BatchGetQueryExecution
-- glue:GetTable
-- glue:GetPartitions
+* **AmazonAthenaFullAccess** arn:aws:iam::aws:policy/AmazonAthenaFullAccess
 
-You will also require read access to the underlying `AWS Athena`_ datasource,
-read and write access to the Athena result S3 bucket, and access to any KMS
-keys used in either of those.
+You will also require read access to the underlying `AWS Athena`_ datasource
+and access to any KMS keys used.
 
 Handler Method
 --------------
@@ -63,42 +37,55 @@ Handler Method
 
 Request Syntax
 --------------
-.. code-block::
+Request::
 
   {
     "Operation": "string" | ["string"],
-    "SchemaName": "string",
     "Parameters": {},
+    "Database": "string",
     "SingleResult": boolean,
-    "EncryptionOption": "string",
-    "KmsKey": "string",
     "WorkGroup": "string"
   }
 
 **Operation**: REQUIRED
   This is the query string to be executed. It may be parameterized with
   `PyFormat`_, using the new format `{}` named placeholders method.
-**SchemaName**: OPTIONAL
-  This is the `AWS Athena`_ schema to run the `Operation` against. Defaults to
-  `default`.
 **Parameters**: OPTIONAL
   Required if your `Operation` is parameterized. The keys in this map should
   correspond to the format names in your operation string or array.
+**Database**: OPTIONAL
+  The schema/database name that you wish to query. Overrides
+  **DATABASE** if present.
 **SingleResult**: OPTIONAL
-  Defaults to `true`. Set to `false` to allow a multiple results. If
-  set to `true` and `Operation` returns multiple results, an error
-  will be thrown.
-**EncryptionOption**: OPTIONAL
-  If set, must be one of `SSE_S3 | SSE_KMS | CSE_KMS`.
-**KmsKey**: OPTIONAL
-  Required if `EncryptionOption` is `SSE_KMS | CSE_KMS`. This is the KMS key
-  ARN or ID.
+  Defaults to `true`. Set to `false` to allow a list of results.
 **WorkGroup**: OPTIONAL
-  The name of the workgroup in which the query is being started. If not present
-  the default workgroup will be used.
+  The `AWS Athena`_ Workgroup to use during. Overrides
+  **WORKGROUP** if present.
+
+Response:
+
+  If `SingleResult` is `true`::
+
+    {
+      "Key": Value,
+      (Keys and values are generated from the query results.
+      Keys are the column names, values are converted to their
+      specified types.)
+    }
+
+  If `SingleResult` is `false`::
+
+    [
+      {
+        "Key": Value,
+        (Keys and values are generated from the query results.
+        Keys are the column names, values are converted to their
+        specified types.)
+      }
+    ]
 
 Lambda Package Location
 -----------------------
-https://s3.amazonaws.com/lambdalambdalambda-repo/quinovas/athena-task/athena-task-0.0.2.zip
+https://s3.amazonaws.com/lambdalambdalambda-repo/quinovas/athena-task/athena-task-0.1.0.zip
 
 License: `APL2`_
